@@ -101,6 +101,7 @@ type Config struct {
 	RFC2136Host              string
 	RFC2136Port              int
 	RFC2136Zone              string
+	RFC2136AxfrInsecure      bool
 	RFC2136Insecure          bool
 	RFC2136TSIGKeyName       string
 	RFC2136TSIGSecret        string
@@ -168,6 +169,7 @@ var defaultConfig = &Config{
 	RFC2136Host:              "",
 	RFC2136Port:              0,
 	RFC2136Zone:              "",
+	RFC2136AxfrInsecure:      false,
 	RFC2136Insecure:          false,
 	RFC2136TSIGKeyName:       "",
 	RFC2136TSIGSecret:        "",
@@ -278,6 +280,7 @@ func (cfg *Config) ParseFlags(args []string) error {
 	app.Flag("rfc2136-host", "When using the RFC2136 provider, specify the host of the DNS server").Default(defaultConfig.RFC2136Host).StringVar(&cfg.RFC2136Host)
 	app.Flag("rfc2136-port", "When using the RFC2136 provider, specify the port of the DNS server").Default(strconv.Itoa(defaultConfig.RFC2136Port)).IntVar(&cfg.RFC2136Port)
 	app.Flag("rfc2136-zone", "When using the RFC2136 provider, specify the zone entry of the DNS server to use").Default(defaultConfig.RFC2136Zone).StringVar(&cfg.RFC2136Zone)
+	app.Flag("rfc2136-axfr-insecure", "When using the RFC2136 provider, specify whether to attach TSIG or not for AXFR zone transfer (default: false, requires --rfc2136-tsig-keyname and rfc2136-tsig-secret)").Default(strconv.FormatBool(defaultConfig.RFC2136AxfrInsecure)).BoolVar(&cfg.RFC2136AxfrInsecure)
 	app.Flag("rfc2136-insecure", "When using the RFC2136 provider, specify whether to attach TSIG or not (default: false, requires --rfc2136-tsig-keyname and rfc2136-tsig-secret)").Default(strconv.FormatBool(defaultConfig.RFC2136Insecure)).BoolVar(&cfg.RFC2136Insecure)
 	app.Flag("rfc2136-tsig-keyname", "When using the RFC2136 provider, specify the TSIG key to attached to DNS messages (required when --rfc2136-insecure=false)").Default(defaultConfig.RFC2136TSIGKeyName).StringVar(&cfg.RFC2136TSIGKeyName)
 	app.Flag("rfc2136-tsig-secret", "When using the RFC2136 provider, specify the TSIG (base64) value to attached to DNS messages (required when --rfc2136-insecure=false)").Default(defaultConfig.RFC2136TSIGSecret).StringVar(&cfg.RFC2136TSIGSecret)
