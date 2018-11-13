@@ -37,6 +37,7 @@ type rfc2136Provider struct {
 	tsigKeyName   string
 	tsigSecret    string
 	tsigSecretAlg string
+	axfrInsecure  bool
 	insecure      bool
 	axfr          bool
 
@@ -62,7 +63,7 @@ type rfc1236Actions interface {
 }
 
 // NewRfc2136Provider is a factory function for OpenStack rfc2136 providers
-func NewRfc2136Provider(host string, port int, zoneName string, insecure bool, keyName string, secret string, secretAlg string, axfr bool, domainFilter DomainFilter, dryRun bool, actions rfc1236Actions) (Provider, error) {
+func NewRfc2136Provider(host string, port int, zoneName string, axfrInsecure bool, insecure bool, keyName string, secret string, secretAlg string, axfr bool, domainFilter DomainFilter, dryRun bool, actions rfc1236Actions) (Provider, error) {
 	secretAlgChecked, ok := tsigAlgs[secretAlg]
 	if !ok {
 		return nil, errors.Errorf("%s is not supported TSIG algorithm", secretAlg)
@@ -71,6 +72,7 @@ func NewRfc2136Provider(host string, port int, zoneName string, insecure bool, k
 	r := &rfc2136Provider{
 		nameserver:   net.JoinHostPort(host, strconv.Itoa(port)),
 		zoneName:     dns.Fqdn(zoneName),
+		axfrInsecure: axfrInsecure,
 		insecure:     insecure,
 		domainFilter: domainFilter,
 		dryRun:       dryRun,
@@ -82,7 +84,7 @@ func NewRfc2136Provider(host string, port int, zoneName string, insecure bool, k
 		r.actions = r
 	}
 
-	if !insecure {
+	if !insecure || !axfrInsecure {
 		r.tsigKeyName = dns.Fqdn(keyName)
 		r.tsigSecret = secret
 		r.tsigSecretAlg = secretAlgChecked
@@ -152,7 +154,7 @@ OuterLoop:
 
 func (r rfc2136Provider) IncomeTransfer(m *dns.Msg, a string) (env chan *dns.Envelope, err error) {
 	t := new(dns.Transfer)
-	if !r.insecure {
+	if !r.axfrInsecure {
 		t.TsigSecret = map[string]string{r.tsigKeyName: r.tsigSecret}
 	}
 
@@ -169,7 +171,7 @@ func (r rfc2136Provider) List() ([]dns.RR, error) {
 
 	m := new(dns.Msg)
 	m.SetAxfr(r.zoneName)
-	if !r.insecure {
+	if !r.axfrInsecure {
 		m.SetTsig(r.tsigKeyName, r.tsigSecretAlg, 300, time.Now().Unix())
 	}
 
